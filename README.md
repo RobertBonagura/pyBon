@@ -5,7 +5,7 @@ PyBon is a Python interpreter, written in C.
 Right now, it is only capable of evaluating simple mathematical expressions. The ability to assign and retreive values from an identifier is coming soon!
  
 
-It features the ability to read Python files via command line by passing in an text file, though it is suggested to call the program by running the REPL for now.
+It features the ability to read Python files via command line by passing in a text file, though it is suggested to call the program by running the REPL for now.
 
 ## Compiling
 
