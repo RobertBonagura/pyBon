@@ -1,6 +1,67 @@
 
 #include "dataStructs.h"
 
+
+/************************************************
+ *  HashSet Functions
+ * **********************************************/
+
+HashSet init_HashSet(unsigned capacity)
+{
+    HashSet* set = malloc(sizeof(HashSet));
+    set->capacity = capacity;
+    set->size = 0;
+    set->array = malloc(capacity * sizeof(Token));
+    return *set;
+}
+
+int hashCode(const char* string)
+{
+    int accum = 1;
+    for (int i = 0; i < strlen(string); i++)
+    {
+        accum = accum + 23 + (string[i] - '0');
+        i++;
+    }
+    return accum % 97;
+}
+
+Token getVal(HashSet set, char* key)
+{
+    int hashIndex = hashCode(key);
+    Token token = set.array[hashIndex];
+    printf("Getting %s from using %s\n", token.data, key);
+    return token;
+    
+}
+
+void addVal(HashSet* set, const char* key, Token token)
+{
+    int hashIndex = hashCode(key);
+    set->array[hashIndex] = token;
+    printf("Added %s to set with %s\n", token.data, key);
+    set->size++;
+}
+
+/*
+int main()
+{
+	//Token token = {"499", NUMB};
+    //printf("This token is %s\n", token.data);
+    //int hashIndex = hashCode(token.data);
+    //printf("%d\n", hashIndex);
+    
+    HashSet set;
+    char* ident = "test";
+    Token token = {"499", NUMB};
+    addVal(&set, ident, token);
+    Token token2 = getVal(set, ident);
+    printf("%s\n", token2.data);
+
+    return 0;
+}
+*/
+
 /************************************************
  *  Queue Functions
  * **********************************************/

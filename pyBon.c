@@ -1,9 +1,6 @@
 
 #include "pyBon.h"
 
-//#include "helper.h"
-//const char* TestIdentifiers[] = {"x", "t", "age", "minus"};
-
 /**
  * ********************************************************************
  *  Main Function   
@@ -56,6 +53,11 @@ int main(int argc, char *argv[])
 
 int runfile(FILE* file)
 {
+	Token first = {"499", NUMB};
+	int hashIndex = hashCode(first.data);
+	HashSet* set;
+	addVal(set, "var", first);
+
 	if (file == NULL) 
 		{
 			perror("Unable to open file");
@@ -67,7 +69,7 @@ int runfile(FILE* file)
 		while (fgets(line, 1000, file) != NULL) 
 		{
 			printf("This line is: %s", line);
-			tokenize(line);
+			tokenize(line, set);
 		}
 		printf("Success reading from file\n");
 		fclose(file);
@@ -80,13 +82,39 @@ int runfile(FILE* file)
  ****************************************************/
 
 int runprompt()
-{
+{ 
+	HashSet set = init_HashSet(97);
+	
+	//Testing for getVal()
+	/*
+	HashSet set = init_HashSet(97);
+	Token** array = &set.array;
+
+	Token first = {"499", NUMB};
+	addVal(&set, "var1", first);
+	Token new1 = getVal(set, "var1");
+
+	Token second = {"788", NUMB};
+	addVal(&set, "var2", second);
+	Token new2 = getVal(set, "var2");
+	
+
+	for (int i = 0; i < set.capacity; i++)
+	{
+		printf("%s\n", set.array[0].data);
+	}
+
+	Token new3 = getVal(set, "var1");
+
+	*/
+	
+
 	char line[1000]; 
 	for (;;)
 	{	
 		printf(">>> ");
 		fgets(line, 1000, stdin);
-		tokenize(line);
+		tokenize(line, &set);
 		if (has_error == TRUE) 
 			{
 				return 1;
@@ -108,7 +136,7 @@ int runprompt()
  * 		parseTokens(QueueOfTokens, SetOfVariables)
  *****************************************************************************/
 
-void tokenize(char* string)
+void tokenize(char* string, HashSet* set)
 {
 	struct Token *temp = malloc(sizeof(Token));
 
@@ -142,7 +170,7 @@ void tokenize(char* string)
 	} while (word != NULL);
 
 	// returns result of parseTokens as value
-	int val = parseToke(tokens);
+	int val = parseToke(tokens, set);
 	printf("%d\n", val);
 
 	free(memory);
@@ -154,83 +182,113 @@ void tokenize(char* string)
  ************************************************************************/
 Token makeToken(char* word) 
 {
+	//char* new;
 	if (isNumber(word)) 
 	{
 		Token t = {word, NUMB};
 		return t;
 	}
-	if (isOperator(Operators, word))
+	else if (isOperator(word))
 	{
 		Token t = {word, OPER};
 		return t;
 	}
-	/**
-	  if (isIdentifier(identifiers, word))
-	  {
-	  		Token t = getVal(identifiers, word)
-	  		return t;
-	  }
-	*/
-	else
+	else if (isAssignment(word))
+	{
+		Token t = {word, ASGN};
+		return t;
+	}
+	else if (isIdentifier(word))
 	{
 		Token t = {word, IDEN};
+		return t;
+	}
+	else
+	{
+		Token t = {word, UNDF};
 		return t;
 	}
 }
 /*****************************************************
  * parseTokens(Queue of Tokens, Set of Variables) 
  * Parses Tokens and evaluates them as an expression
- * 		State 0 - Ensures first token is number
- * 		State 1 - Ensures number is followed by Operator
- * 		State 2 - Ensure Operator is followed by Number
+ * 		State 0 : Ensures first token is proper value
+ * 			- If first token is number -> Looks for Operator (s1)
+ * 		 	- It is an undefined Identifier  -> Looks for assignment (s3)
+ * 		
+ * 		State 1 : Ensures token is Operator
+ * 			- If it is an Operator -> s2 
  * 
- * 	Tokens can be given as type NUMB or IDEN
- * 		- if Token is IDEN, check to see if it exists on VariableSet
+ * 		State 2 : Ensures token is a Number
+ * 			- Can exit here, or recive an Operation and go back to s1
  * 
- * 	If the first Token is not an IDEN, or, is an IDEN not followed by an
- *  assignment operation, this line will be an expression.
- * 
- *  This funciton currently assumes no assignment operation will be passed in
- *  and evaluates the line as an expression, returning an int value.
- ****************************************************/
-int parseToke(TokenQueue* tokens)
-{
+ * 		State 3 : Ensures token is assingment operator
+ * 			- If it is -> state s2
 
-	//State 0 - ensures first token is a number
-	int accum = 0;
+ * 
+ ****************************************************/
+int parseToke(TokenQueue* tokens, HashSet* set)
+{
+	int accum = 0; // value to be returned
 	if (isEmpty(tokens))
 	{
 		printf("Expression is empty.\n");
 		return -1;
 	}
 
+	/***********************************************************************
+	 * State 0 - ensures first token is a number and assigns it to accum
+	 ***********************************************************************/
+
 	Token temp = dequeue(tokens);
 	const char* type = tokenTypes[temp.type];
-	if (strncmp(type, "NUMB", 3) != 0 && strncmp(type, "NUMB", 3) != 0)
+	const char* varName;
+	int nextState;
+
+	// If first token is neither NUMB nor IDEN, ends here
+	if (strncmp(type, "NUMB", 3) != 0 && strncmp(type, "IDEN", 3) != 0)
 	{
-		printf("The expression must start with a number\n");
+		printf("Error: Pybon can only evaluate expressions or assign values to variables at this time.\n");
+		printf("\tExpression must start with either:\n");
+		printf("1) A number to begin expression evaluation, or\n");
+		printf("2) An undefined variable followed by an assignment to some value\n");
 		return -1;
 	}
 	
-	if (strncmp(type, "NUMB", 3) == 0)
+	// If first token is IDEN, get value and replace temp with this
+	if (strncmp(type, "IDEN", 3) == 0)
+	{
+		Token new = getVal(*set, temp.data);
+		/**
+		  if (set does not contain this value)
+		  {
+			  varName = temp.data;
+			  nextState = 3;
+		  }
+		  else					
+		*/{
+			accum = atoi(new.data);
+			nextState = 1;
+		}
+
+	}
+	else // (strncmp(type, "NUMB", 3) == 0)
 	{
 		accum = atoi(temp.data);
-	}
-	else //temp.type == "IDEN"
-	{
-		//accum = getIden(&identifiers, temp.data);
-		printf("Error: Not able to evalute identifiers yet\n");
+		nextState = 1;
 	}
 	
 	//loops through queue untill its gone through all tokens.
-	int needsOperator = TRUE;
-	int needsNumber = FALSE;
 	char operation = 0;
+	int addAccumToVar = 0;
 	while (!isEmpty(tokens))
 	{
-		// State 1  - Ensures Number is followed by Operator
+
+	/***********************************************************************
+	 * State 1  - Ensures Number is followed by Operator
+	 ***********************************************************************/ 
 		
-		if (needsOperator)
+		if (nextState == 1)
 		{
 			Token temp = dequeue(tokens);
 			const char* type = tokenTypes[temp.type];
@@ -238,6 +296,7 @@ int parseToke(TokenQueue* tokens)
 			{
 				//temp = getIden(TestIdentifiers, temp.data);
 				//type = tokenTypes[temp.type];
+				printf("Sorry, not able to evalute identifiers yet\n");
 			}
 			if (strncmp(type, "OPER", 3) != 0)
 			{
@@ -245,11 +304,12 @@ int parseToke(TokenQueue* tokens)
 				return -1;
 			}
 				operation = *temp.data;
-				needsOperator = FALSE;
-				needsNumber = TRUE;
+				nextState = 2;
 		}
-		// State 2  - Ensures Operator is followed by a number
-		if (needsNumber)
+		/***********************************************************************
+	 	* State 2  - Ensures Token is a number
+	 	***********************************************************************/
+		if (nextState == 2)
 		{	
 			if (isEmpty(tokens))
 			{
@@ -259,24 +319,67 @@ int parseToke(TokenQueue* tokens)
 
 			Token temp = dequeue(tokens);
 			const char* type = tokenTypes[temp.type];
-			if (strncmp(type, "IDEN", 3) == 0)
-			{
-				printf("Sorry, cant check for Identifiers right now\n");
-				return -1;
-				//temp = getIden(TestIdentifiers, temp.data);
-				//type = tokenTypes[temp.type];
-			}
 
-			if (strncmp(type, "NUMB", 3) != 0)
+			if ((strncmp(type, "NUMB", 3) != 0 ) && strncmp(type, "IDEN", 3) != 0)
 			{
 				printf("ERROR: An operation must be followed by a number\n");
 				return -1;	
 			}
-			int operand = atoi(temp.data);
-			needsOperator = TRUE;
-			needsNumber = FALSE;
+
+			int operand;
+			if (strncmp(type, "IDEN", 3) == 0)
+			{
+				temp = getVal(*set, temp.data);
+				// if set does not contain this value, return error messsage
+				const char* newType = tokenTypes[temp.type];
+				operand = atoi(temp.data);
+			}
+			else // (strncmp(type, "NUMB", 3) == 0)
+			{
+				operand = atoi(temp.data);
+			}
+
 			accum = evaluate(accum, operation, operand);
+			nextState = 1;
 		}
+	/***********************************************************************
+	 * State 3  - Ensures Assingment Operator
+	 ***********************************************************************/		
+		if (nextState == 3)
+		{
+			if (isEmpty(tokens))
+			{
+				printf("ERROR: unable to evaluate unassigned identifier\n");
+				return -1;
+			}
+
+			Token temp = dequeue(tokens);
+			const char* type = tokenTypes[temp.type];
+
+			if (strncmp(type, "ASGN", 3) != 0 )
+			{
+				printf("ERROR: Unable to evaluate unassigned identifier\n");
+				return -1;	
+			}			
+
+			nextState = 4; 
+		}
+	/***********************************************************************
+	 * State 4  - Creates token
+	 ***********************************************************************/
+		if (nextState == 4)
+		{
+			addAccumToVar = TRUE;
+			nextState = 2;
+		}
+
+	}
+	if (addAccumToVar == TRUE)
+	{
+		char* buffer = malloc(16 * sizeof(int));
+		sprintf(buffer, "%d", accum);
+		Token newVal = {buffer, NUMB};
+		addVal(set, varName, newVal);
 	}
 	return accum;
 }

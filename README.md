@@ -1,11 +1,9 @@
-# PyBon
+# pyBon
 
-PyBon is a Python interpreter, written in C.
+pyBon is a Python interpreter, written in C, entirely from scratch. It is without the use of any parser or lexical analyzer generators. 
 
-Right now, it is only capable of evaluating simple mathematical expressions. The ability to assign and retreive values from an identifier is coming soon!
+Right now, it is only capable of evaluating simple mathematical expressions. The ability to assign vlaues to an identifier and retreive such values is coming soon!
  
-
-It features the ability to read Python files via command line by passing in a text file, though it is suggested to call the program by running the REPL for now.
 
 ## Compiling
 
@@ -17,16 +15,20 @@ cc -g pyBon.c helper.c dataStructs.c -o pyBon
 
 ## Usage
 
+pyBon features the ability to read Python files via command line by passing in a text file, though it is suggested to call the program by running the REPL for now. 
+
 ```bash
 ./pyBon
 ```
-Or
+Or, if you have text file of mathematical expressions on each line
 ```bash
 ./pyBon test.txt
 ```
 
 
 ## Contributing
+
+Currently need help adding and retreiving values from a set of user-defined identifiers. 
 
 https://github.com/RobertBonagura/pyBon
 

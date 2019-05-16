@@ -16,12 +16,10 @@ int has_error = FALSE;
 // Function declarations
 int runfile(FILE *fp);
 int runprompt();
-void tokenize(char* str);
+void tokenize(char* str, HashSet* set);
 Token makeToken(char* word);
-int parseToke(TokenQueue* tokens);
+int parseToke(TokenQueue* tokens, HashSet* set);
 
-const char* tokenTypes[] = {"UNDEF", "NUMB", "OPER", "IDEN"};
-const char* Operators[] = {"+", "-", "*", "/"};
-const char* TestIdentifiers[] = {"x", "t", "age", "minus"};
+const char* tokenTypes[] = {"UNDF", "NUMB", "OPER", "ASGN", "IDEN"};
 
 #endif

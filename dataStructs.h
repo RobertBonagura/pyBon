@@ -4,9 +4,12 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <limits.h> 
+#include <string.h>
+
+#define HASH_SIZE = 97;
 
 // Data Types
-typedef enum {UNDEF, NUMB, OPER, IDEN} tokenType; // --  { KEYW, NUMB, IDEN, OPER, COMPR, LPAR, RPAR, LBRK, RBRK, COLN }
+typedef enum {UNDF, NUMB, OPER, ASGN, IDEN} tokenType; // --  { KEYW, NUMB, IDEN, OPER, COMPR, LPAR, RPAR, LBRK, RBRK, COLN }
 
 typedef struct Token
 {
@@ -22,7 +25,23 @@ typedef struct TokenQueue
     struct Token* array;
 } TokenQueue;
 
-//Queue Function Declarations
+typedef struct HashSet
+{
+    Token* array;
+    int capacity;
+    int size;
+} HashSet;
+
+
+// HashSet Function Declarations
+HashSet init_HashSet(unsigned capacity);
+int hashCode(const char* string);
+Token getVal(HashSet set, char* key);
+void addVal(HashSet* set, const char* key, Token token);
+
+
+
+// Queue Function Declarations
 struct TokenQueue* createTokenQueue(unsigned capacity);
 int isFull(struct TokenQueue* queue);
 int isEmpty(struct TokenQueue* queue);
