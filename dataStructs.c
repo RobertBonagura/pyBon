@@ -1,18 +1,42 @@
 
 #include "dataStructs.h"
 
+//Testing for getVal()
+/**
+int main()
+{
+
+HashSet* set = init_HashSet(97);
+printf("Hash set\n");
+Token first = {"499", NUMB};
+Token* pToke1 = &first;
+addVal(&*set, "var1", &*pToke1);
+
+ * 
+*/
+/*
+//Token second = getVal(set, "var1");
+Token second = {"788", NUMB};
+Token* pToke2 = &second;
+addVal(&*set, "another", &*pToke2);
+
+Token new = getVal(&*set, "var1");
+
+return 0;
+}
+*/
 
 /************************************************
  *  HashSet Functions
  * **********************************************/
 
-HashSet init_HashSet(unsigned capacity)
+HashSet* init_HashSet(unsigned capacity)
 {
     HashSet* set = malloc(sizeof(HashSet));
     set->capacity = capacity;
     set->size = 0;
     set->array = malloc(capacity * sizeof(Token));
-    return *set;
+    return set;
 }
 
 int hashCode(const char* string)
@@ -26,20 +50,19 @@ int hashCode(const char* string)
     return accum % 97;
 }
 
-Token getVal(HashSet set, char* key)
+Token getVal(HashSet* set, char* key)
 {
     int hashIndex = hashCode(key);
-    Token token = set.array[hashIndex];
-    printf("Getting %s from using %s\n", token.data, key);
-    return token;
+    Token* token = malloc(sizeof(Token));
+    *token = set->array[hashIndex];
+    return *token;
     
 }
 
-void addVal(HashSet* set, const char* key, Token token)
+void addVal(HashSet* set, const char* key, Token* token)
 {
     int hashIndex = hashCode(key);
-    set->array[hashIndex] = token;
-    printf("Added %s to set with %s\n", token.data, key);
+    set->array[hashIndex] = *token;
     set->size++;
 }
 

@@ -2,7 +2,7 @@
 
 pyBon is a Python interpreter, written in C, entirely from scratch. It is without the use of any parser or lexical analyzer generators. 
 
-Right now, it is only capable of evaluating simple mathematical expressions. The ability to assign vlaues to an identifier and retreive such values is coming soon!
+Right now, it is only capable of evaluating simple mathematical expressions. Values can be assigned to variables now as well, and these variables can be used in mathematical expresssions.
  
 
 ## Compiling
@@ -27,8 +27,6 @@ Or, if you have text file of mathematical expressions on each line
 
 
 ## Contributing
-
-Currently need help adding and retreiving values from a set of user-defined identifiers. 
 
 https://github.com/RobertBonagura/pyBon
 

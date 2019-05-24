@@ -34,10 +34,10 @@ typedef struct HashSet
 
 
 // HashSet Function Declarations
-HashSet init_HashSet(unsigned capacity);
+HashSet* init_HashSet(unsigned capacity);
 int hashCode(const char* string);
-Token getVal(HashSet set, char* key);
-void addVal(HashSet* set, const char* key, Token token);
+Token getVal(HashSet* set, char* key);
+void addVal(HashSet* set, const char* key, Token* token);
 
 
 

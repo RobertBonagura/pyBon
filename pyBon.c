@@ -1,6 +1,11 @@
 
 #include "pyBon.h"
 
+// TO DO
+
+// print set
+// isEmpty set
+
 /**
  * ********************************************************************
  *  Main Function   
@@ -53,10 +58,12 @@ int main(int argc, char *argv[])
 
 int runfile(FILE* file)
 {
+	/*
 	Token first = {"499", NUMB};
-	int hashIndex = hashCode(first.data);
+	Token* pToke = &first;
+	addVal(&*set, "var", &*pToke);
+	*/
 	HashSet* set;
-	addVal(set, "var", first);
 
 	if (file == NULL) 
 		{
@@ -69,7 +76,7 @@ int runfile(FILE* file)
 		while (fgets(line, 1000, file) != NULL) 
 		{
 			printf("This line is: %s", line);
-			tokenize(line, set);
+			tokenize(line, &*set);
 		}
 		printf("Success reading from file\n");
 		fclose(file);
@@ -83,38 +90,33 @@ int runfile(FILE* file)
 
 int runprompt()
 { 
-	HashSet set = init_HashSet(97);
-	
-	//Testing for getVal()
+	HashSet* set = init_HashSet(97);
 	/*
-	HashSet set = init_HashSet(97);
-	Token** array = &set.array;
-
 	Token first = {"499", NUMB};
-	addVal(&set, "var1", first);
-	Token new1 = getVal(set, "var1");
+	Token* pToke = &first;
+	//Come back an check, i may not need to dereference Token
+	addVal(&*set, "var1", &*pToke);
 
 	Token second = {"788", NUMB};
-	addVal(&set, "var2", second);
-	Token new2 = getVal(set, "var2");
-	
+	pToke = &second;
+	addVal(&*set, "age", &*pToke);
+	Token new2 = getVal(set, "var1");
+		
 
-	for (int i = 0; i < set.capacity; i++)
+	for (int i = 0; i < set->capacity; i++)
 	{
-		printf("%s\n", set.array[0].data);
+		printf("%s\n", set->array[0].data);
 	}
 
-	Token new3 = getVal(set, "var1");
+	Token new3 = getVal(set, "age");
 
 	*/
-	
-
 	char line[1000]; 
 	for (;;)
 	{	
 		printf(">>> ");
 		fgets(line, 1000, stdin);
-		tokenize(line, &set);
+		tokenize(line, &*set);
 		if (has_error == TRUE) 
 			{
 				return 1;
@@ -158,7 +160,7 @@ void tokenize(char* string, HashSet* set)
 			word[strlen(word)-1] = '\0';
 
 		if (strlen(word) == 0)
-			printf("This is an empty line\n");
+			printf("");
 
 		else 
 		{
@@ -169,9 +171,7 @@ void tokenize(char* string, HashSet* set)
 		word = strtok(NULL, delim);
 	} while (word != NULL);
 
-	// returns result of parseTokens as value
-	int val = parseToke(tokens, set);
-	printf("%d\n", val);
+	parseToke(&*tokens, &*set);
 
 	free(memory);
 	free(copy);
@@ -227,13 +227,13 @@ Token makeToken(char* word)
 
  * 
  ****************************************************/
-int parseToke(TokenQueue* tokens, HashSet* set)
+void parseToke(TokenQueue* tokens, HashSet* set)
 {
 	int accum = 0; // value to be returned
 	if (isEmpty(tokens))
 	{
-		printf("Expression is empty.\n");
-		return -1;
+		printf("its empty");
+		return;
 	}
 
 	/***********************************************************************
@@ -252,22 +252,28 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 		printf("\tExpression must start with either:\n");
 		printf("1) A number to begin expression evaluation, or\n");
 		printf("2) An undefined variable followed by an assignment to some value\n");
-		return -1;
+		return;
 	}
 	
 	// If first token is IDEN, get value and replace temp with this
 	if (strncmp(type, "IDEN", 3) == 0)
 	{
-		Token new = getVal(*set, temp.data);
-		/**
-		  if (set does not contain this value)
-		  {
-			  varName = temp.data;
-			  nextState = 3;
-		  }
-		  else					
-		*/{
-			accum = atoi(new.data);
+		//print each value of set
+		int hashIndex = hashCode(temp.data);
+		if (set->array[hashIndex].data == NULL)
+		{
+			if (isEmpty(tokens))
+			{
+				printf("Error: identifier '%s' is not defined\n", temp.data);
+				return;	
+			}
+			varName = temp.data;
+			nextState = 3;
+		}
+		else
+		{
+			temp = getVal(&*set, temp.data);
+			accum = atoi(temp.data);
 			nextState = 1;
 		}
 
@@ -277,10 +283,16 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 		accum = atoi(temp.data);
 		nextState = 1;
 	}
+
+	if (isEmpty(tokens))
+	{
+		printf("%d\n", accum);
+		return;
+	}
 	
 	//loops through queue untill its gone through all tokens.
 	char operation = 0;
-	int addAccumToVar = 0;
+	int assignAccumToVar = 0;
 	while (!isEmpty(tokens))
 	{
 
@@ -292,16 +304,10 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 		{
 			Token temp = dequeue(tokens);
 			const char* type = tokenTypes[temp.type];
-			if (strncmp(type, "IDEN", 3) == 0)
-			{
-				//temp = getIden(TestIdentifiers, temp.data);
-				//type = tokenTypes[temp.type];
-				printf("Sorry, not able to evalute identifiers yet\n");
-			}
 			if (strncmp(type, "OPER", 3) != 0)
 			{
 				printf("ERROR: Every number must be followed by an Operator\n");
-				return -1;
+				return;
 			}
 				operation = *temp.data;
 				nextState = 2;
@@ -314,7 +320,7 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 			if (isEmpty(tokens))
 			{
 				printf("ERROR: An operation must be followed by a number\n");
-				return -1;
+				return;
 			}
 
 			Token temp = dequeue(tokens);
@@ -323,16 +329,23 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 			if ((strncmp(type, "NUMB", 3) != 0 ) && strncmp(type, "IDEN", 3) != 0)
 			{
 				printf("ERROR: An operation must be followed by a number\n");
-				return -1;	
+				return;	
 			}
 
 			int operand;
 			if (strncmp(type, "IDEN", 3) == 0)
 			{
-				temp = getVal(*set, temp.data);
-				// if set does not contain this value, return error messsage
-				const char* newType = tokenTypes[temp.type];
-				operand = atoi(temp.data);
+				int hashIndex = hashCode(temp.data);
+				if (set->array[hashIndex].data == NULL)
+				{
+					printf("Error: identifier '%s' is not defined\n", temp.data);
+					return;
+				}
+				else
+				{
+					temp = getVal(&*set, temp.data);
+					operand = atoi(temp.data);
+				}
 			}
 			else // (strncmp(type, "NUMB", 3) == 0)
 			{
@@ -342,24 +355,29 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 			accum = evaluate(accum, operation, operand);
 			nextState = 1;
 		}
+		if (isEmpty(tokens))
+		{
+			printf("%d\n", accum);
+			return;
+		}
 	/***********************************************************************
-	 * State 3  - Ensures Assingment Operator
+	 * State 3  - Ensures Assignment Operator
 	 ***********************************************************************/		
 		if (nextState == 3)
 		{
-			if (isEmpty(tokens))
-			{
-				printf("ERROR: unable to evaluate unassigned identifier\n");
-				return -1;
-			}
-
 			Token temp = dequeue(tokens);
 			const char* type = tokenTypes[temp.type];
+
+			if (isEmpty(tokens))
+			{
+				printf("Error: Identifier '%s' is not defined\n", temp.data);
+				return;
+			}
 
 			if (strncmp(type, "ASGN", 3) != 0 )
 			{
 				printf("ERROR: Unable to evaluate unassigned identifier\n");
-				return -1;	
+				return;	
 			}			
 
 			nextState = 4; 
@@ -369,17 +387,29 @@ int parseToke(TokenQueue* tokens, HashSet* set)
 	 ***********************************************************************/
 		if (nextState == 4)
 		{
-			addAccumToVar = TRUE;
+			assignAccumToVar = TRUE;
 			nextState = 2;
 		}
 
+		if (assignAccumToVar == TRUE)
+		{
+			Token temp = dequeue(tokens);
+			const char* type = tokenTypes[temp.type];
+			Token newVal = {temp.data, NUMB};
+			Token* pToke = &newVal;
+			addVal(&*set, varName, &*pToke);
+
+			/*
+			for (int i = 0; i < set->capacity; i++)
+			{
+				printf("%d: %s\n", i, set->array[i].data);
+			}
+			*/
+
+			if (isEmpty(tokens))
+				return;
+			else
+				nextState = 2;
+		}
 	}
-	if (addAccumToVar == TRUE)
-	{
-		char* buffer = malloc(16 * sizeof(int));
-		sprintf(buffer, "%d", accum);
-		Token newVal = {buffer, NUMB};
-		addVal(set, varName, newVal);
-	}
-	return accum;
 }

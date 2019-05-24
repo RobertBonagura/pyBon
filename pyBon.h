@@ -18,7 +18,7 @@ int runfile(FILE *fp);
 int runprompt();
 void tokenize(char* str, HashSet* set);
 Token makeToken(char* word);
-int parseToke(TokenQueue* tokens, HashSet* set);
+void parseToke(TokenQueue* tokens, HashSet* set);
 
 const char* tokenTypes[] = {"UNDF", "NUMB", "OPER", "ASGN", "IDEN"};
 
